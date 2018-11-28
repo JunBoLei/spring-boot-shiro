@@ -6,6 +6,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.servlet.Filter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,12 +16,16 @@ public class ShiroConfig {
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(SecurityManager securityManager){
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);//securityManager必须设置
+        Map<String,Filter> filterMap = new LinkedHashMap<>();
+        filterMap.put("sessionFilter",getShiroFormAuthenticationFilter());
+        shiroFilterFactoryBean.setFilters(filterMap);
         shiroFilterFactoryBean.setLoginUrl("/login");//登录路径
-        shiroFilterFactoryBean.setUnauthorizedUrl("/login");//未授权路径
-        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
+        shiroFilterFactoryBean.setUnauthorizedUrl("/unauth");//未授权路径
+        shiroFilterFactoryBean.setSuccessUrl("/list");//登录成功后调用接口
+        Map<String,String> filterChainDefinitionMap = new LinkedHashMap<>();
+
         filterChainDefinitionMap.put("/login","anon");//匿名访问
         filterChainDefinitionMap.put("/**", "authc");//拦截其他所有的请求
-
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         //System.out.println("Shiro拦截器工厂类注入成功");
         System.out.println("++++++++++++++++++++++++++shiroconfig end++++++++++++++++++++++++++++");
@@ -35,7 +40,8 @@ public class ShiroConfig {
     @Bean
     public SecurityManager securityManager() {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(getRealm());
+        securityManager.setRealm(getRealm());//设置认证类
+        //securityManager.setSessionManager(getShiroFormAuthenticationFilter());//设置sessionManager
         return securityManager;
     }
 
@@ -47,5 +53,9 @@ public class ShiroConfig {
     public MyRealm getRealm(){
         MyRealm myRealm = new MyRealm();
         return myRealm;
+    }
+    @Bean
+    public ShiroFormAuthenticationFilter getShiroFormAuthenticationFilter(){
+        return new ShiroFormAuthenticationFilter();
     }
 }
