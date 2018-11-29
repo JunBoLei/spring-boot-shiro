@@ -55,4 +55,15 @@ public class LoginController {
         map.put("msg", "未登录");
         return map;
     }
+
+    @RequestMapping(value = "/logout")
+    @ResponseBody
+    public Object logout() {
+        Map response =new HashMap<>();
+        Subject subject = SecurityUtils.getSubject();
+        subject.logout();
+        response.put("code", "000");
+        response.put("msg", "退出成功");
+        return response;
+    }
 }

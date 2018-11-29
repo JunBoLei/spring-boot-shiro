@@ -3,6 +3,7 @@ package com.example.springbootshiro.config;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,19 +17,16 @@ public class ShiroConfig {
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(SecurityManager securityManager){
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);//securityManager必须设置
-        Map<String,Filter> filterMap = new LinkedHashMap<>();
+        Map<String,Filter> filterMap = new LinkedHashMap<>();//过滤器
         filterMap.put("sessionFilter",getShiroFormAuthenticationFilter());
         shiroFilterFactoryBean.setFilters(filterMap);
-        shiroFilterFactoryBean.setLoginUrl("/login");//登录路径
-        shiroFilterFactoryBean.setUnauthorizedUrl("/unauth");//未授权路径
-        shiroFilterFactoryBean.setSuccessUrl("/list");//登录成功后调用接口
-        Map<String,String> filterChainDefinitionMap = new LinkedHashMap<>();
+        shiroFilterFactoryBean.setLoginUrl("/login");
+        Map<String,String> filterChainDefinitionMap = new LinkedHashMap<>();//拦截设置
 
         filterChainDefinitionMap.put("/login","anon");//匿名访问
+        filterChainDefinitionMap.put("/logout","anon");//匿名访问
         filterChainDefinitionMap.put("/**", "authc");//拦截其他所有的请求
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
-        //System.out.println("Shiro拦截器工厂类注入成功");
-        System.out.println("++++++++++++++++++++++++++shiroconfig end++++++++++++++++++++++++++++");
         return shiroFilterFactoryBean;
 
     }
@@ -41,7 +39,9 @@ public class ShiroConfig {
     public SecurityManager securityManager() {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setRealm(getRealm());//设置认证类
-        //securityManager.setSessionManager(getShiroFormAuthenticationFilter());//设置sessionManager
+        DefaultWebSessionManager defaultWebSessionManager = getDefaultWebSessionManager();//设置session管理类
+        defaultWebSessionManager.setGlobalSessionTimeout(20000);//设置session有效期5秒
+        securityManager.setSessionManager(defaultWebSessionManager);
         return securityManager;
     }
 
@@ -54,8 +54,22 @@ public class ShiroConfig {
         MyRealm myRealm = new MyRealm();
         return myRealm;
     }
+
+    /**
+     * 注入登录拦截器
+     * @return
+     */
     @Bean
     public ShiroFormAuthenticationFilter getShiroFormAuthenticationFilter(){
         return new ShiroFormAuthenticationFilter();
+    }
+
+    /**
+     * 注入session管理类
+     * @return
+     */
+    @Bean
+    public DefaultWebSessionManager getDefaultWebSessionManager(){
+        return new DefaultWebSessionManager();
     }
 }
